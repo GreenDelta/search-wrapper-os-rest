@@ -46,6 +46,11 @@ class RestRequest implements OsRequest {
 		request.source().query(query);
 		request.source().trackTotalHits(true);
 	}
+	
+	@Override
+	public void addField(String field) {
+		request.source().fetchField(field);
+	}
 
 	@Override
 	public RestResponse execute() throws IOException {
