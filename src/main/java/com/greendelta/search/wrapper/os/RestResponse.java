@@ -44,16 +44,12 @@ class RestResponse implements OsResponse {
 
 	@Override
 	public List<? extends Bucket> getTermBuckets(Aggregation aggregation) {
-		switch (aggregation.getType()) {
-		case StringTerms.NAME:
-			return ((ParsedStringTerms) aggregation).getBuckets();
-		case LongTerms.NAME:
-			return ((ParsedLongTerms) aggregation).getBuckets();
-		case DoubleTerms.NAME:
-			return ((ParsedDoubleTerms) aggregation).getBuckets();
-		default:
-			return new ArrayList<>();
-		}
+		return switch (aggregation.getType()) {
+			case StringTerms.NAME -> ((ParsedStringTerms) aggregation).getBuckets();
+			case LongTerms.NAME -> ((ParsedLongTerms) aggregation).getBuckets();
+			case DoubleTerms.NAME -> ((ParsedDoubleTerms) aggregation).getBuckets();
+			default -> new ArrayList<>();
+		};
 	}
 
 	public List<? extends org.opensearch.search.aggregations.bucket.range.Range.Bucket> getRangeBuckets(

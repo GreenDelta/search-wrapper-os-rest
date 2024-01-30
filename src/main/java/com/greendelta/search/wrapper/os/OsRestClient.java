@@ -2,7 +2,6 @@ package com.greendelta.search.wrapper.os;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,10 +13,7 @@ import org.opensearch.action.admin.indices.settings.get.GetSettingsRequest;
 import org.opensearch.action.bulk.BulkRequest;
 import org.opensearch.action.delete.DeleteRequest;
 import org.opensearch.action.get.GetRequest;
-import org.opensearch.action.get.GetResponse;
-import org.opensearch.action.get.MultiGetItemResponse;
 import org.opensearch.action.get.MultiGetRequest;
-import org.opensearch.action.get.MultiGetResponse;
 import org.opensearch.action.index.IndexRequest;
 import org.opensearch.action.support.WriteRequest.RefreshPolicy;
 import org.opensearch.action.update.UpdateRequest;
@@ -34,7 +30,6 @@ import org.opensearch.script.ScriptType;
 import com.greendelta.search.wrapper.SearchClient;
 import com.greendelta.search.wrapper.SearchQuery;
 import com.greendelta.search.wrapper.SearchResult;
-import com.greendelta.search.wrapper.os.Search.OsRequest;
 
 public class OsRestClient implements SearchClient {
 
@@ -49,7 +44,7 @@ public class OsRestClient implements SearchClient {
 	@Override
 	public SearchResult<Map<String, Object>> search(SearchQuery searchQuery) {
 		try {
-			OsRequest request = new RestRequest(client, indexName);
+			var request = new RestRequest(client, indexName);
 			return Search.run(request, searchQuery);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -59,18 +54,18 @@ public class OsRestClient implements SearchClient {
 
 	@Override
 	public Set<String> searchIds(SearchQuery searchQuery) {
-		OsRequest request = new RestRequest(client, indexName);
+		var request = new RestRequest(client, indexName);
 		return Search.ids(request, searchQuery);
 	}
 
 	@Override
 	public void create(Map<String, String> settings) {
 		try {
-			boolean exists = client.indices().exists(new GetIndexRequest(indexName), RequestOptions.DEFAULT);
+			var exists = client.indices().exists(new GetIndexRequest(indexName), RequestOptions.DEFAULT);
 			if (exists)
 				return;
-			String config = settings.get("config");
-			String mapping = settings.get("mapping");
+			var config = settings.get("config");
+			var mapping = settings.get("mapping");
 			CreateIndexRequest request = new CreateIndexRequest(indexName)
 					.settings(Settings.builder().loadFromSource(config, XContentType.JSON))
 					.mapping(mapping, XContentType.JSON);
@@ -96,7 +91,7 @@ public class OsRestClient implements SearchClient {
 	}
 
 	private IndexRequest indexRequest(String id, Map<String, Object> content, boolean refresh) {
-		IndexRequest request = new IndexRequest(indexName).id(id).opType(OpType.INDEX).source(content);
+		var request = new IndexRequest(indexName).id(id).opType(OpType.INDEX).source(content);
 		if (refresh) {
 			request.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
 		}
@@ -139,7 +134,7 @@ public class OsRestClient implements SearchClient {
 	}
 
 	private UpdateRequest updateRequest(String id, Map<String, Object> content, boolean refresh) {
-		UpdateRequest request = new UpdateRequest(indexName, id).doc(content);
+		var request = new UpdateRequest(indexName, id).doc(content);
 		if (refresh) {
 			request.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
 		}
@@ -147,7 +142,7 @@ public class OsRestClient implements SearchClient {
 	}
 
 	private UpdateRequest updateRequest(String id, String script, Map<String, Object> parameters, boolean refresh) {
-		UpdateRequest request = new UpdateRequest(indexName, id)
+		var request = new UpdateRequest(indexName, id)
 				.script(new Script(ScriptType.INLINE, "painless", script, parameters));
 		if (refresh) {
 			request.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
@@ -170,7 +165,7 @@ public class OsRestClient implements SearchClient {
 	}
 
 	private void bulk(Consumer<BulkRequest> createRequests) {
-		BulkRequest request = new BulkRequest();
+		var request = new BulkRequest();
 		createRequests.accept(request);
 		request.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
 		try {
@@ -181,7 +176,7 @@ public class OsRestClient implements SearchClient {
 	}
 
 	private DeleteRequest deleteRequest(String id, boolean refresh) {
-		DeleteRequest request = new DeleteRequest(indexName, id);
+		var request = new DeleteRequest(indexName, id);
 		if (refresh) {
 			request.setRefreshPolicy(RefreshPolicy.IMMEDIATE);
 		}
@@ -190,9 +185,9 @@ public class OsRestClient implements SearchClient {
 
 	@Override
 	public boolean has(String id) {
-		GetRequest request = new GetRequest(indexName, id);
+		var request = new GetRequest(indexName, id);
 		try {
-			GetResponse response = client.get(request, RequestOptions.DEFAULT);
+			var response = client.get(request, RequestOptions.DEFAULT);
 			if (response == null)
 				return false;
 			return response.isExists();
@@ -204,12 +199,12 @@ public class OsRestClient implements SearchClient {
 
 	@Override
 	public Map<String, Object> get(String id) {
-		GetRequest request = new GetRequest(indexName, id);
+		var request = new GetRequest(indexName, id);
 		try {
-			GetResponse response = client.get(request, RequestOptions.DEFAULT);
+			var response = client.get(request, RequestOptions.DEFAULT);
 			if (response == null)
 				return null;
-			Map<String, Object> source = response.getSource();
+			var source = response.getSource();
 			if (source == null || source.isEmpty())
 				return null;
 			return source;
@@ -221,19 +216,19 @@ public class OsRestClient implements SearchClient {
 
 	@Override
 	public List<Map<String, Object>> get(Set<String> ids) {
-		MultiGetRequest request = new MultiGetRequest();
+		var request = new MultiGetRequest();
 		ids.forEach(id -> request.add(indexName, id));
 		try {
-			MultiGetResponse response = client.mget(request, RequestOptions.DEFAULT);
+			var response = client.mget(request, RequestOptions.DEFAULT);
 			if (response == null)
 				return null;
-			List<Map<String, Object>> results = new ArrayList<>();
-			Iterator<MultiGetItemResponse> it = response.iterator();
+			var results = new ArrayList<Map<String, Object>>();
+			var it = response.iterator();
 			while (it.hasNext()) {
-				GetResponse resp = it.next().getResponse();
+				var resp = it.next().getResponse();
 				if (resp == null)
 					continue;
-				Map<String, Object> source = resp.getSource();
+				var source = resp.getSource();
 				if (source == null || source.isEmpty())
 					continue;
 				results.add(source);
@@ -251,25 +246,18 @@ public class OsRestClient implements SearchClient {
 			boolean exists = client.indices().exists(new GetIndexRequest(indexName), RequestOptions.DEFAULT);
 			if (!exists)
 				return;
-			Settings settings = client.indices()
+			var settings = client.indices()
 					.getSettings(new GetSettingsRequest().indices(indexName), RequestOptions.DEFAULT)
 					.getIndexToSettings().get(indexName);
-			settings = settings.filter(key -> {
-				switch (key) {
-				case "index.provided_name":
-				case "index.creation_date":
-				case "index.uuid":
-				case "index.version.created":
-					return false;
-				default:
-					return true;
-				}
+			settings = settings.filter(key -> switch (key) {
+				case "index.provided_name", "index.creation_date", "index.uuid", "index.version.created" -> false;
+				default -> true;
 			});
-			Map<String, Object> mapping = client.indices()
+			var mapping = client.indices()
 					.getMapping(new GetMappingsRequest().indices(indexName), RequestOptions.DEFAULT).mappings()
 					.get(indexName).getSourceAsMap();
 			client.indices().delete(new DeleteIndexRequest(indexName), RequestOptions.DEFAULT);
-			CreateIndexRequest request = new CreateIndexRequest(indexName)
+			var request = new CreateIndexRequest(indexName)
 					.settings(settings)
 					.mapping(mapping);
 			client.indices().create(request, RequestOptions.DEFAULT);
@@ -281,7 +269,7 @@ public class OsRestClient implements SearchClient {
 	@Override
 	public void delete() {
 		try {
-			boolean exists = client.indices().exists(new GetIndexRequest(indexName), RequestOptions.DEFAULT);
+			var exists = client.indices().exists(new GetIndexRequest(indexName), RequestOptions.DEFAULT);
 			if (!exists)
 				return;
 			client.indices().delete(new DeleteIndexRequest(indexName), RequestOptions.DEFAULT);
